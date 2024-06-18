@@ -4,6 +4,8 @@ import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode , sign , verify } from 'hono/jwt'
 import { use } from 'hono/jsx'
 
+import { signInInput, signUpInput } from 'harsh-medium-common'
+
 
 
 const user = new Hono<{
@@ -18,6 +20,11 @@ user.post('/signup', async (c) => {
 		datasourceUrl: c.env?.DATABASE_URL,
 	}).$extends(withAccelerate());
 	const body = await c.req.json();
+	const {success} = signUpInput.safeParse(body)
+	if(!success){
+		c.status(403)
+		return c.json("Invalid credentials")
+	}
 	try {
 		const user = await prisma.user.create({
 			data: {
@@ -41,6 +48,11 @@ user.post('/signin',async (c) => {
 		datasourceUrl: c.env?.DATABASE_URL,
 	}).$extends(withAccelerate());
 	const body = await c.req.json();
+	const {success} = signInInput.safeParse(body)
+	if(!success){
+		c.status(403)
+		return c.json("Invalid credentials")
+	}
 	const user = await prisma.user.findUnique({
 		where:{
 			email:body.email,
